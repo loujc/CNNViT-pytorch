@@ -191,7 +191,7 @@ class Block(nn.Module):
     def forward(self, x):
         h = x
         x = self.attention_norm(x)
-        print(type(x))
+        # print(type(x))
         x, weights = self.attn(x)
         x = x + h
 
