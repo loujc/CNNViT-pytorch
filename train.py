@@ -6,6 +6,7 @@ import argparse
 import os
 import random
 import numpy as np
+import time
 
 from datetime import timedelta
 
@@ -77,6 +78,9 @@ def setup(args):
     num_classes = 1000 if args.dataset == "ImageNet" else 10 if args.dataset == "cifar10" else 100
 
     model = VisionTransformer(config, args.img_size, zero_head=True, num_classes=num_classes)
+    for k,v in model.named_parameters():
+       if "encoder" in k:
+            v.requires_grad = False
     model.load_from(np.load(args.pretrained_dir))
     model.to(args.device)
     num_params = count_parameters(model)
@@ -152,7 +156,7 @@ def train(args, model):
     train_loader, test_loader = get_loader(args)
 
     #----------- Prepare optimizer and scheduler -----------
-    optimizer = torch.optim.SGD(model.parameters(),
+    optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad,model.parameters()),
                                 lr=args.learning_rate,
                                 momentum=0.9,
                                 weight_decay=args.weight_decay)
@@ -208,7 +212,9 @@ def train(args, model):
                 loss.backward()
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
+                # time1 = time.time()
                 losses.update(loss.item()*args.gradient_accumulation_steps)
+                # print(time.time()-time1)
                 if args.fp16:
                     torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
                 else:
@@ -275,19 +281,19 @@ def main():
                         help="Total batch size for training.")      
     parser.add_argument("--eval_batch_size", default=128, type=int,      
                         help="Total batch size for eval.")
-    parser.add_argument("--eval_every", default=100, type=int,           #原来是100
+    parser.add_argument("--eval_every", default=10000, type=int,           #原来是100
                         help="Run prediction on validation set every so many steps."
                              "Will always run one evaluation at the end of training.")
 
-    parser.add_argument("--learning_rate", default=3e-2, type=float,
+    parser.add_argument("--learning_rate", default=6e-2, type=float,      # 3e-2
                         help="The initial learning rate for SGD.")
     parser.add_argument("--weight_decay", default=0, type=float,
-                        help="Weight deay if we apply some.")
-    parser.add_argument("--num_steps", default=10000, type=int,           #原来是10000？感觉就是默认无限训练，需要再停下
+                        help="Weight decay if we apply some.")
+    parser.add_argument("--num_steps", default=20000, type=int,           #原来是10000？感觉就是默认无限训练，需要再停下
                         help="Total number of training epochs to perform.")
     parser.add_argument("--decay_type", choices=["cosine", "linear"], default="cosine",
                         help="How to decay the learning rate.")
-    parser.add_argument("--warmup_steps", default=500, type=int,
+    parser.add_argument("--warmup_steps", default=500, type=int,           #500
                         help="Step of training to perform learning rate warmup for.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float,
                         help="Max gradient norm.")
