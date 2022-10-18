@@ -202,7 +202,7 @@ class Block(nn.Module):
         return x, weights
         # return x
     def load_from(self, weights, n_block):
-        ROOT = f"Transformer/encoderblock_{n_block}"
+        ROOT = f"Transformer/encoderblock_{int(n_block)+1}"
         with torch.no_grad():
             query_weight = np2th(weights[pjoin(ROOT, ATTENTION_Q, "kernel")]).view(self.hidden_size, self.hidden_size).t()
             key_weight = np2th(weights[pjoin(ROOT, ATTENTION_K, "kernel")]).view(self.hidden_size, self.hidden_size).t()

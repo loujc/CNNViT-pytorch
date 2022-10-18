@@ -21,11 +21,10 @@ from models.modeling import VisionTransformer, CONFIGS
 from utils.scheduler import WarmupLinearSchedule, WarmupCosineSchedule
 from utils.data_utils import get_loader
 from utils.dist_util import get_world_size
-from torchsummary import summary
+# from torchsummary import summary
 
 
 logger = logging.getLogger(__name__)
-
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -229,7 +228,7 @@ def train(args, model):
                     accuracy = valid(args, model, writer, test_loader, global_step)
                     if best_acc < accuracy:
                         # 保存bin文件
-                        save_model(args, global_step, model)
+                        save_model(args, model)
                         # 也保存pth tar文件用于继续训练
                         save_pth({
                             'global_step'   :   global_step,
@@ -272,11 +271,11 @@ def main():
 
     parser.add_argument("--img_size", default=224, type=int,
                         help="Resolution size")
-    parser.add_argument("--train_batch_size", default=64, type=int,    #原来是512
+    parser.add_argument("--train_batch_size", default=128, type=int,    #原来是512
                         help="Total batch size for training.")      
-    parser.add_argument("--eval_batch_size", default=64, type=int,      
+    parser.add_argument("--eval_batch_size", default=128, type=int,      
                         help="Total batch size for eval.")
-    parser.add_argument("--eval_every", default=10, type=int,           #原来是100
+    parser.add_argument("--eval_every", default=100, type=int,           #原来是100
                         help="Run prediction on validation set every so many steps."
                              "Will always run one evaluation at the end of training.")
 
@@ -284,7 +283,7 @@ def main():
                         help="The initial learning rate for SGD.")
     parser.add_argument("--weight_decay", default=0, type=float,
                         help="Weight deay if we apply some.")
-    parser.add_argument("--num_steps", default=1000, type=int,           #原来是10000？感觉就是默认无限训练，需要再停下
+    parser.add_argument("--num_steps", default=10000, type=int,           #原来是10000？感觉就是默认无限训练，需要再停下
                         help="Total number of training epochs to perform.")
     parser.add_argument("--decay_type", choices=["cosine", "linear"], default="cosine",
                         help="How to decay the learning rate.")
@@ -341,4 +340,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import os
+    os.environ['CUDA_VISIBLE_DEVICE'] = '0,1'
     main()
