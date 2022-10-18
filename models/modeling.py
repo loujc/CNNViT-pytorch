@@ -300,7 +300,9 @@ class VisionTransformer(nn.Module):
                 nn.init.zeros_(self.head.bias)
             else:
                 self.head.weight.copy_(np2th(weights["head/kernel"]).t())
+                print(self.head.weight)
                 self.head.bias.copy_(np2th(weights["head/bias"]).t())
+                print(self.head.bias)
 
             # self.transformer.embeddings.patch_embeddings.weight.copy_(np2th(weights["embedding/kernel"], conv=True))
             # self.transformer.embeddings.patch_embeddings.bias.copy_(np2th(weights["embedding/bias"]))
