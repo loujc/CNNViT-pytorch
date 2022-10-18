@@ -37,6 +37,7 @@ class EarlyConvViT(nn.Module):
         self.conv_layers.add_module("flatten image", 
                                     Rearrange('batch channels height width -> batch (height width) channels'))
         self.empty = nn.Identity()
+
     def forward(self, x):
         # print("input",x.size())
         y = self.conv_layers(x)

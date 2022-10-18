@@ -55,11 +55,13 @@ def get_loader(args):
                                     transform=transform_test) if args.local_rank in [-1, 0] else None
     elif args.dataset == "ImageNet":
         trainset = datasets.ImageFolder(
-                                        root = '/data/users/zyd/ImageNet/train',
+                                        # root = '/data/users/zyd/ImageNet/train',
+                                        root = '/DISK2/Dataset/ImageNet_1k/train',
                                         transform= transform_imagenet
                                         )
         testset = datasets.ImageFolder(
-                                        root = '/data/users/zyd/ImageNet/val',
+                                        # root = '/data/users/zyd/ImageNet/val',
+                                        root = '/DISK2/Dataset/ImageNet_1k/val',
                                         transform= transform_imagenet_test
                                         )if args.local_rank in [-1, 0] else None
         # trainset = datasets.ImageNet(root='/DISK2/Dataset/ImageNet_1k/train',

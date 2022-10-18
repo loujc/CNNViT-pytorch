@@ -154,19 +154,17 @@ class Embeddings(nn.Module):
                                        out_channels=config.hidden_size,
                                        kernel_size=patch_size,
                                        stride=patch_size)
-        self.position_embeddings = nn.Parameter(torch.zeros(1, 197, config.hidden_size)) #TODO：改了197 原来为 n_patches+1
+        self.position_embeddings = nn.Parameter(torch.zeros(1, n_patches+1, config.hidden_size)) #TODO：改了197 原来为 n_patches+1
         self.cls_token = nn.Parameter(torch.zeros(1, 1, config.hidden_size))
 
         self.dropout = Dropout(config.transformer["dropout_rate"])
 
     def forward(self, x):
         B = x.shape[0]
-        # print("forward x:",x.size())
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
         if self.hybrid:
             x = self.hybrid_model(x)
-            # print("out hybrid_model:",x.size())
         # x = self.patch_embeddings(x)
         x = x.flatten(2)
         # print("flatten:",x.size())
@@ -222,6 +220,15 @@ class Block(nn.Module):
             self.attn.key.bias.copy_(key_bias)
             self.attn.value.bias.copy_(value_bias)
             self.attn.out.bias.copy_(out_bias)
+            # print(self.attn.query.weight)
+            # print(self.attn.key.weight)
+            # print(self.attn.value.weight)
+            # print(self.attn.out.weight)
+            # print(self.attn.query.bias)
+            # print(self.attn.value.bias)
+            # print(self.attn.out.bias)
+
+
 
             mlp_weight_0 = np2th(weights[pjoin(ROOT, FC_0, "kernel")]).t()
             mlp_weight_1 = np2th(weights[pjoin(ROOT, FC_1, "kernel")]).t()
@@ -279,6 +286,7 @@ class VisionTransformer(nn.Module):
         self.classifier = config.classifier
 
         self.transformer = Transformer(config, img_size, vis)
+        
         self.head = Linear(config.hidden_size, num_classes)
 
     def forward(self, x, labels=None):
@@ -314,12 +322,16 @@ class VisionTransformer(nn.Module):
             posemb_new = self.transformer.embeddings.position_embeddings
             if posemb.size() == posemb_new.size():
                 self.transformer.embeddings.position_embeddings.copy_(posemb)
+                # print("和npz相同")
             else:
+                # print("和npz不同")
                 logger.info("load_pretrained: resized variant: %s to %s" % (posemb.size(), posemb_new.size()))
                 ntok_new = posemb_new.size(1)
 
                 if self.classifier == "token":
                     posemb_tok, posemb_grid = posemb[:, :1], posemb[0, 1:]  #第一列和第一行第一个后面所有元素
+                    print(posemb_tok)
+                    print(posemb_grid)
                     ntok_new -= 1
                 else:
                     posemb_tok, posemb_grid = posemb[:, :0], posemb[0]
