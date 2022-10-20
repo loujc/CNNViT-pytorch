@@ -308,9 +308,9 @@ class VisionTransformer(nn.Module):
                 nn.init.zeros_(self.head.bias)
             else:
                 self.head.weight.copy_(np2th(weights["head/kernel"]).t())
-                print(self.head.weight)
+                # print(self.head.weight)
                 self.head.bias.copy_(np2th(weights["head/bias"]).t())
-                print(self.head.bias)
+                # print(self.head.bias)
 
             # self.transformer.embeddings.patch_embeddings.weight.copy_(np2th(weights["embedding/kernel"], conv=True))
             # self.transformer.embeddings.patch_embeddings.bias.copy_(np2th(weights["embedding/bias"]))
@@ -322,16 +322,16 @@ class VisionTransformer(nn.Module):
             posemb_new = self.transformer.embeddings.position_embeddings
             if posemb.size() == posemb_new.size():
                 self.transformer.embeddings.position_embeddings.copy_(posemb)
-                # print("和npz相同")
+                print("和npz相同")
             else:
-                # print("和npz不同")
+                print("和npz不同")
                 logger.info("load_pretrained: resized variant: %s to %s" % (posemb.size(), posemb_new.size()))
                 ntok_new = posemb_new.size(1)
 
                 if self.classifier == "token":
                     posemb_tok, posemb_grid = posemb[:, :1], posemb[0, 1:]  #第一列和第一行第一个后面所有元素
-                    print(posemb_tok)
-                    print(posemb_grid)
+                    # print(posemb_tok)
+                    # print(posemb_grid)
                     ntok_new -= 1
                 else:
                     posemb_tok, posemb_grid = posemb[:, :0], posemb[0]
@@ -346,7 +346,8 @@ class VisionTransformer(nn.Module):
                 posemb_grid = posemb_grid.reshape(1, gs_new * gs_new, -1)
                 posemb = np.concatenate([posemb_tok, posemb_grid], axis=1)
                 self.transformer.embeddings.position_embeddings.copy_(np2th(posemb))
-
+                print(self.transformer.embeddings.position_embeddings)
+                
             for bname, block in self.transformer.encoder.named_children():
                 for uname, unit in block.named_children():
                     unit.load_from(weights, n_block=uname)
